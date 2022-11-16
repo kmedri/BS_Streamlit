@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../OLC_Streamlit/assets"
+		},
+		{
+			"path": "../../OLC_Streamlit/data"
+		},
+		{
+			"path": "../../OLC_Streamlit/.streamlit"
+		}
+	],
+	"settings": {}
+}

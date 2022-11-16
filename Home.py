@@ -1,7 +1,91 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import pandas as pd
+import folium as flm
+from streamlit_folium import st_folium
+from streamlit_option_menu import option_menu
+from PIL import Image
+import plotly.express as px
+import cufflinks
 
-st.set_page_config(page_title='Omdena Liverpool', layout='wide')
+APP_TITLE = 'Predicting RTC severity using Machine Learning'
+
+st.set_page_config(page_title='Omdena Liverpool Chapter', layout='wide')
+
+
+# Cache Data
+@st.cache
+def get_data(url):
+    df = pd.read_parquet(url)
+
+    return df
+
+
+def display_accidents_count(
+    df, year, severity_status, accident_severity, pforce, metric_title
+):
+    df = df[(df['Year'] == year)]
+    if pforce:
+        df = df[df['Police_Force'] == pforce]
+        df.drop_duplicates(inplace=True)
+        total = df[accident_severity].count()
+        # st.metric(metric_title,'{:,}'.format(total))
+    if severity_status:
+        df=df[df['Accident_Severity'] == severity_status]
+        df.drop_duplicates(inplace=True)
+        total=df[accident_severity].count()
+        st.metric(metric_title, '{:,}'.format(total))
+
+
+def display_casualties_count(
+    df, year, severity_status, no_of_casualties, pforce, metric_title
+):
+    df = df[(df['Year'] == year)]
+    if pforce:
+        df = df[df['Police_Force'] == pforce]
+        df.drop_duplicates(inplace=True)
+        total = df[no_of_casualties].sum()
+
+    if severity_status:
+        df = df[df['Accident_Severity'] == severity_status]
+        df.drop_duplicates(inplace=True)
+        total = df[no_of_casualties].sum()
+        st.metric(metric_title, '{:,}'.format(total))
+
+
+def display_year(df, year, metric_title):
+    st.metric(metric_title, '{:}'.format(year))
+
+
+def display_severity_status(df, severity_status, metric_title):
+    st.metric(metric_title, '{:}'.format(severity_status))
+
+
+# Add Data
+url = 'data/full_accident_data_time_series.parquet'
+df = get_data(url)
+
+# Add a sidebar for navigation
+with st.sidebar:
+    selected = option_menu(
+        menu_title="Main Menu",
+        options=['Accidents', 'Visualizations', 'About']
+    )
+# Create side menu
+if selected == 'Accidents':
+    year_list = list(df['Year'].unique())
+    year_list.sort()
+    year = st.sidebar.selectbox(
+        'Year', year_list, len(year_list) - 1
+    )
+    pforce_list = list(df['Police_Force'].unique())
+    pforce_list.sort()
+    pforce = st.sidebar.selectbox(
+        'Police Force', pforce_list, len(pforce_list) - 1
+    )
+    severity_status = st.sidebar.radio(
+        'Severity Status', ['Slight', 'Serious', 'Fatal']
+    )
 
 # bootstrap 4 collapse example
 components.html(
@@ -11,6 +95,7 @@ components.html(
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bootstrap demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
     </head>
     <body>
         <header>
@@ -225,7 +310,6 @@ components.html(
             <p class="mb-0">New to Bootstrap? <a href="/">Visit the homepage</a> or read our <a href="../getting-started/introduction/">getting started guide</a>.</p>
         </div>
         </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
     </body>
     """,
     height=3000,
